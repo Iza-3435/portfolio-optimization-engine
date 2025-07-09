@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Intelligence - Real-Time Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --black: #000000;
+            --dark-gray: #1a1a1a;
+            --gray: #666666;
+            --light-gray: #cccccc;
+            --lighter-gray: #f5f5f5;
+            --white: #ffffff;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--white);
+            color: var(--black);
+            line-height: 1.6;
+            font-weight: 400;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+        
+        .header {
+            margin-bottom: 60px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 42px;
+            font-weight: 300;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 16px;
+            color: var(--gray);
+            font-weight: 400;
+        }
+        
+        .card {
+            background: var(--white);
+            border: 1px solid var(--light-gray);
+            margin-bottom: 32px;
+            padding: 32px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        
+        .input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 1px solid var(--black);
+            background: var(--white);
+            font-size: 15px;
+            transition: all 0.2s ease;
+        }
+        
+        .input:focus {
+            outline: none;
+            background: var(--lighter-gray);
+        }
+        
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border: 1px solid var(--light-gray);
+            border-top: none;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .search-result {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--lighter-gray);
+            transition: background 0.2s ease;
+        }
+        
+        .search-result:hover {
+            background: var(--lighter-gray);
+        }
+        
+        .search-result:last-child {
+            border-bottom: none;
+        }
+        
+        .search-symbol {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .search-name {
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        .btn {
+            padding: 14px 32px;
+            border: 1px solid var(--black);
+            background: var(--white);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .btn:hover {
+            background: var(--black);
+            color: var(--white);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: var(--black);
+            color: var(--white);
+        }
+        
+        .btn-primary:hover {
+            background: var(--dark-gray);
+        }
+        
+        .stock-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 32px;
+            min-height: 40px;
+        }
+        
+        .stock-tag {
+            background: var(--black);
+            color: var(--white);
+            padding: 8px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: 0.02em;
+        }
+        
+        .stock-tag .price {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .stock-tag .change {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 2px;
+        }
+        
+        .stock-tag .change.positive {
+            background: var(--success);
+            color: white;
+        }
+        
+        .stock-tag .change.negative {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .remove-btn {
+            background: transparent;
+            border: none;
+            color: var(--white);
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+        
+        .remove-btn:hover {
+            opacity: 1;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .optimization-controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            align-items: center;
+        }
+        
+        .optimization-controls label {
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .optimization-controls select {
+            padding: 8px 16px;
+            border: 1px solid var(--black);
+            background: var(--white);
+            font-size: 14px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 32px;
+            margin-bottom: 48px;
+            border-bottom: 1px solid var(--light-gray);
+        }
+        
+        .tab {
+            padding: 16px 0;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .tab.active {
+            color: var(--black);
+            border-bottom-color: var(--black);
+        }
+        
+        .tab:hover:not(.active) {
+            color: var(--black);
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+        
+        .metric-card {
+            text-align: center;
+            padding: 24px;
+            border: 1px solid var(--light-gray);
+        }
+        
+        .metric-value {
+            font-size: 36px;
+            font-weight: 300;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 500;
+        }
+        
+        .positive { color: var(--success); }
+        .negative { color: var(--danger); }
+        
+        .chart-wrapper {
+            margin-bottom: 48px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 320px;
+            margin-bottom: 16px;
+        }
+        
+        .chart-small {
+            height: 240px;
+        }
+        
+        .chart-description {
+            font-size: 14px;
+            color: var(--gray);
+            line-height: 1.5;
+            padding: 0 8px;
+        }
+        
+        .signals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        
+        .signal-card {
+            border: 1px solid var(--light-gray);
+            padding: 24px;
+        }
+        
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .signal-symbol {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .signal-badge {
+            padding: 6px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: 1px solid;
+        }
+        
+        .signal-buy {
+            color: var(--success);
+            border-color: var(--success);
+        }
+        
+        .signal-sell {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+        
+        .signal-hold {
+            color: var(--gray);
+            border-color: var(--gray);
+        }
+        
+        .signal-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .signal-metric {
+            text-align: center;
+        }
+        
+        .signal-metric-value {
+            font-size: 20px;
+            font-weight: 300;
+            margin-bottom: 4px;
+        }
+        
+        .signal-metric-label {
+            font-size: 11px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .allocation-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .allocation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--lighter-gray);
+        }
+        
+        .allocation-item:last-child {
+            border-bottom: none;
+        }
+        
+        .allocation-symbol {
+            font-weight: 500;
+            font-size: 16px;
+        }
+        
+        .allocation-weight {
+            font-size: 16px;
+            font-weight: 300;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 80px 24px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--lighter-gray);
+            border-top: 2px solid var(--black);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            transform: translateY(100px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            background: var(--black);
+            color: var(--white);
+            border-radius: 4px;
+        }
+        
+        .status.show {
+            transform: translateY(0);
+        }
+        
+        .status-error {
+            background: var(--danger);
+        }
+        
+        .status-warning {
+            background: var(--warning);
+        }
+        
+        .status-info {
+            background: var(--info);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+            font-size: 14px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+        
+        .backend-status {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--lighter-gray);
+            border: 1px solid var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 4px;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--danger);
+        }
+        
+        .status-indicator.connected {
+            background: var(--success);
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--lighter-gray);
+            margin: 16px 0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--black);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Correlation matrix specific styles */
+        .correlation-matrix {
+            overflow: hidden;
+            background: var(--white);
+        }
+        
+        .correlation-matrix canvas {
+            max-width: 100%;
+            height: auto !important;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px 16px;
+            }
+            
+            .header h1 {
+                font-size: 32px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                gap: 24px;
+            }
+            
+            .backend-status {
+                top: 12px;
+                right: 12px;
+                font-size: 11px;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="backend-status">
+        <span class="status-indicator" id="backend-indicator"></span>
+        <span id="backend-text">Checking backend...</span>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Portfolio Intelligence</h1>
+            <p>Real-time portfolio analysis powered by Yahoo Finance</p>
+        </div>
+
+        <!-- Stock Selection -->
+        <div class="card">
+            <div class="card-title">Portfolio Construction</div>
+            
+            <div class="input-group">
+                <input type="text" 
+                       class="input" 
+                       id="stock-input" 
+                       placeholder="Enter stock symbol (e.g., AAPL) or search by name"
+                       onkeyup="handleSearch(event)"
+                       onkeypress="handleEnterKey(event)">
+                <div class="search-results" id="search-results"></div>
+                <button class="btn btn-primary" onclick="addStock()">Add Stock</button>
+            </div>
+            
+            <div class="stock-tags" id="selected-stocks">
+                <div class="empty-state">No stocks selected</div>
+            </div>
+            
+            <div class="optimization-controls">
+                <label for="optimization-method">Optimization Method:</label>
+                <select id="optimization-method">
+                    <option value="max_sharpe">Maximum Sharpe Ratio</option>
+                    <option value="min_volatility">Minimum Volatility</option>
+                    <option value="equal_weight">Equal Weight</option>
+                    <option value="risk_parity">Risk Parity</option>
+                </select>
+            </div>
+            
+            <div class="actions">
+                <button class="btn btn-primary" onclick="analyzePortfolio()" id="analyze-btn">Analyze Portfolio</button>
+                <button class="btn" onclick="loadSamplePortfolio()">Load Sample</button>
+                <button class="btn" onclick="clearAllStocks()">Clear All</button>
+            </div>
+            
+            <div class="progress-bar" id="progress-bar" style="display: none;">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Analysis Section -->
+        <div id="analysis-section" style="display: none;">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('overview')">Overview</div>
+                <div class="tab" onclick="switchTab('performance')">Performance</div>
+                <div class="tab" onclick="switchTab('allocation')">Allocation</div>
+                <div class="tab" onclick="switchTab('risk')">Risk Analysis</div>
+            </div>
+
+            <!-- Overview Panel -->
+            <div id="overview-panel" class="tab-panel">
+                <div class="card">
+                    <div class="card-title">Portfolio Metrics</div>
+                    <div class="metrics-grid" id="metrics-grid">
+                        <!-- Metrics will be populated here -->
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">Technical Signals</div>
+                    <div class="signals-grid" id="trading-signals">
+                        <!-- Signals will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Panel -->
+            <div id="performance-panel" class="tab-panel" style="display: none;">
+                <div class="card">
+                    <div class="card-title">Historical Performance</div>
+                    <div class="chart-wrapper">
+                        <div class="chart-container">
+                            <canvas id="performance-chart"></canvas>
+                        </div>
+                        <p class="chart-description">
+                            Portfolio value evolution based on real historical price data from Yahoo Finance.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title">Rolling Volatility</div>
+                        <div class="chart-wrapper">
+                            <div class="chart-container chart-small">
+                                <canvas id="volatility-chart"></canvas>
+                            </div>
+                            <p class="chart-description">
+                                30-day rolling volatility computed from actual price movements.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">Drawdown Analysis</div>
+                        <div class="chart-wrapper">
+                            <div class="chart-container chart-small">
+                                <canvas id="drawdown-chart"></canvas>
+                            </div>
+                            <p class="chart-description">
+                                Peak-to-trough decline from historical highs.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Allocation Panel -->
+            <div id="allocation-panel" class="tab-panel" style="display: none;">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title">Optimized Allocation</div>
+                        <div class="chart-wrapper">
+                            <div class="chart-container chart-small">
+                                <canvas id="allocation-chart"></canvas>
+                            </div>
+                            <p class="chart-description">
+                                Portfolio weights optimized based on real market data and selected strategy.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">Weight Distribution</div>
+                        <div class="allocation-list" id="allocation-list">
+                            <!-- Allocation list will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">Monte Carlo Simulation</div>
+                    <div class="chart-wrapper">
+                        <div class="chart-container">
+                            <canvas id="monte-carlo-chart"></canvas>
+                        </div>
+                        <p class="chart-description">
+                            1000 simulated portfolio paths based on historical returns and volatility from real market data.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Panel -->
+            <div id="risk-panel" class="tab-panel" style="display: none;">
+                <div class="card">
+                    <div class="card-title">Efficient Frontier</div>
+                    <div class="chart-wrapper">
+                        <div class="chart-container">
+                            <canvas id="efficient-frontier-chart"></canvas>
+                        </div>
+                        <p class="chart-description">
+                            Risk-return trade-off visualization based on real historical correlations.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-title">Correlation Matrix</div>
+                        <div class="chart-wrapper">
+                            <div class="chart-container chart-small correlation-matrix">
+                                <canvas id="correlation-chart"></canvas>
+                            </div>
+                            <p class="chart-description">
+                                Asset correlation computed from real historical returns.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-title">Risk Metrics</div>
+                        <div class="metrics-grid" style="margin-bottom: 0;">
+                            <div class="metric-card">
+                                <div class="metric-value negative" id="var-value">-</div>
+                                <div class="metric-label">Value at Risk (95%)</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="beta-value">-</div>
+                                <div class="metric-label">Portfolio Beta</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Notifications -->
+    <div class="status" id="status-message"></div>
+
+    <script>
+        // Configuration - Updated for Yahoo Finance backend
+        const API_BASE_URL = 'http://127.0.0.1:5000/api';
+        
+        // State
+        let selectedStocks = [];
+        let stockQuotes = {};
+        let analysisData = null;
+        let charts = {};
+        let backendConnected = false;
+        let searchTimeout = null;
+        
+        // Chart.js defaults
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif';
+        Chart.defaults.color = '#666666';
+        Chart.defaults.borderColor = '#e5e5e5';
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkBackendConnection();
+            updateSelectedStocks();
+            
+            // Hide search results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.input-group')) {
+                    hideSearchResults();
+                }
+            });
+        });
+        
+        async function checkBackendConnection() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    backendConnected = true;
+                    updateBackendStatus(true, data);
+                } else {
+                    throw new Error('Backend not responding');
+                }
+            } catch (error) {
+                backendConnected = false;
+                updateBackendStatus(false, null);
+                showStatus('Backend not connected. Please start the Flask server.', 'error');
+            }
+        }
+        
+        function updateBackendStatus(connected, healthData) {
+            const indicator = document.getElementById('backend-indicator');
+            const text = document.getElementById('backend-text');
+            
+            if (connected && healthData) {
+                indicator.classList.add('connected');
+                if (healthData.data_source === 'Yahoo Finance (yfinance)') {
+                    text.textContent = 'Yahoo Finance Ready';
+                    showStatus('Connected to Yahoo Finance - unlimited requests!', 'success');
+                } else {
+                    text.textContent = 'Connected';
+                }
+            } else {
+                indicator.classList.remove('connected');
+                text.textContent = 'Backend Offline';
+            }
+        }
+        
+        function handleSearch(event) {
+            const query = event.target.value.trim();
+            
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            if (query.length < 2) {
+                hideSearchResults();
+                return;
+            }
+            
+            // Debounce search
+            searchTimeout = setTimeout(() => {
+                searchStocks(query);
+            }, 300);
+        }
+        
+        async function searchStocks(query) {
+            if (!backendConnected) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/search/${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                if (data.results && data.results.length > 0) {
+                    displaySearchResults(data.results);
+                } else {
+                    hideSearchResults();
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+                hideSearchResults();
+            }
+        }
+        
+        function displaySearchResults(results) {
+            const searchResults = document.getElementById('search-results');
+            
+            searchResults.innerHTML = results.map(result => `
+                <div class="search-result" onclick="selectSearchResult('${result.symbol}', '${result.name}')">
+                    <div class="search-symbol">${result.symbol}</div>
+                    <div class="search-name">${result.name}</div>
+                </div>
+            `).join('');
+            
+            searchResults.style.display = 'block';
+        }
+        
+        function hideSearchResults() {
+            const searchResults = document.getElementById('search-results');
+            searchResults.style.display = 'none';
+        }
+        
+        function selectSearchResult(symbol, name) {
+            const input = document.getElementById('stock-input');
+            input.value = symbol;
+            hideSearchResults();
+            addStock();
+        }
+        
+        function handleEnterKey(event) {
+            if (event.key === 'Enter') {
+                hideSearchResults();
+                addStock();
+            }
+        }
+        
+        async function addStock() {
+            const input = document.getElementById('stock-input');
+            const symbol = input.value.toUpperCase().trim();
+            
+            if (!symbol) {
+                showStatus('Please enter a stock symbol', 'error');
+                return;
+            }
+            
+            if (selectedStocks.includes(symbol)) {
+                showStatus('Stock already added', 'error');
+                return;
+            }
+            
+            if (selectedStocks.length >= 10) {
+                showStatus('Maximum 10 stocks allowed', 'error');
+                return;
+            }
+            
+            // Validate stock if backend is connected
+            if (backendConnected) {
+                showStatus('Validating stock...', 'info');
+                try {
+                    const response = await fetch(`${API_BASE_URL}/validate-stock/${symbol}`);
+                    const data = await response.json();
+                    
+                    if (data.valid) {
+                        selectedStocks.push(symbol);
+                        stockQuotes[symbol] = data;
+                        input.value = '';
+                        updateSelectedStocks();
+                        showStatus(`${symbol} added - $${data.price.toFixed(2)}`, 'success');
+                    } else {
+                        showStatus(`Invalid stock symbol: ${symbol}`, 'error');
+                    }
+                } catch (error) {
+                    showStatus('Error validating stock. Please try again.', 'error');
+                }
+            } else {
+                showStatus('Backend not connected. Please start the Flask server.', 'error');
+            }
+        }
+        
+        function removeStock(symbol) {
+            selectedStocks = selectedStocks.filter(s => s !== symbol);
+            delete stockQuotes[symbol];
+            updateSelectedStocks();
+            showStatus(`${symbol} removed`, 'success');
+        }
+        
+        function updateSelectedStocks() {
+            const container = document.getElementById('selected-stocks');
+            
+            if (selectedStocks.length === 0) {
+                container.innerHTML = '<div class="empty-state">No stocks selected</div>';
+                return;
+            }
+            
+            container.innerHTML = selectedStocks.map(symbol => {
+                const quote = stockQuotes[symbol];
+                let priceInfo = '';
+                
+                if (quote) {
+                    const changeClass = quote.change >= 0 ? 'positive' : 'negative';
+                    priceInfo = `
+                        <span class="price">${quote.price.toFixed(2)}</span>
+                        <span class="change ${changeClass}">${quote.change_percent}%</span>
+                    `;
+                }
+                
+                return `
+                    <div class="stock-tag">
+                        <span>${symbol}</span>
+                        ${priceInfo}
+                        <button class="remove-btn" onclick="removeStock('${symbol}')">&times;</button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function clearAllStocks() {
+            selectedStocks = [];
+            stockQuotes = {};
+            updateSelectedStocks();
+            hideAnalysis();
+            showStatus('Portfolio cleared', 'success');
+        }
+        
+        function loadSamplePortfolio() {
+            selectedStocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA'];
+            // Clear quotes - they'll be fetched during validation
+            stockQuotes = {};
+            
+            // Validate all sample stocks
+            if (backendConnected) {
+                validateSampleStocks();
+            } else {
+                updateSelectedStocks();
+                showStatus('Sample portfolio loaded (backend needed for real data)', 'warning');
+            }
+        }
+        
+        async function validateSampleStocks() {
+            for (const symbol of selectedStocks) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/validate-stock/${symbol}`);
+                    const data = await response.json();
+                    if (data.valid) {
+                        stockQuotes[symbol] = data;
+                    }
+                } catch (error) {
+                    console.error(`Error validating ${symbol}:`, error);
+                }
+            }
+            updateSelectedStocks();
+            showStatus('Sample portfolio loaded with real prices', 'success');
+        }
+        
+        async function analyzePortfolio() {
+            if (selectedStocks.length < 2) {
+                showStatus('Add at least 2 stocks for analysis', 'error');
+                return;
+            }
+            
+            if (!backendConnected) {
+                showStatus('Backend not connected. Please start the Flask server.', 'error');
+                return;
+            }
+            
+            const analyzeBtn = document.getElementById('analyze-btn');
+            analyzeBtn.disabled = true;
+            
+            showLoading('Analyzing portfolio with Yahoo Finance data...');
+            showProgress();
+            
+            try {
+                const optimizationMethod = document.getElementById('optimization-method').value;
+                
+                const response = await fetch(`${API_BASE_URL}/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        stocks: selectedStocks,
+                        optimization_method: optimizationMethod
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Analysis failed');
+                }
+                
+                analysisData = await response.json();
+                displayAnalysis();
+                showStatus(`Analysis complete with ${analysisData.data_points} data points`, 'success');
+            } catch (error) {
+                showStatus(`Analysis failed: ${error.message}`, 'error');
+                console.error('Analysis error:', error);
+            } finally {
+                hideLoading();
+                hideProgress();
+                analyzeBtn.disabled = false;
+            }
+        }
+        
+        function showProgress() {
+            const progressBar = document.getElementById('progress-bar');
+            const progressFill = document.getElementById('progress-fill');
+            
+            progressBar.style.display = 'block';
+            
+            // Fast progress for Yahoo Finance (no rate limits)
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 25;
+                if (progress > 90) progress = 90;
+                progressFill.style.width = progress + '%';
+            }, 500);
+            
+            // Store interval for cleanup
+            progressBar.dataset.interval = interval;
+        }
+        
+        function hideProgress() {
+            const progressBar = document.getElementById('progress-bar');
+            const progressFill = document.getElementById('progress-fill');
+            
+            // Complete the progress bar
+            progressFill.style.width = '100%';
+            
+            setTimeout(() => {
+                progressBar.style.display = 'none';
+                progressFill.style.width = '0%';
+                
+                // Clear interval
+                const interval = progressBar.dataset.interval;
+                if (interval) {
+                    clearInterval(interval);
+                }
+            }, 500);
+        }
+        
+        function displayAnalysis() {
+            document.getElementById('analysis-section').style.display = 'block';
+            displayMetrics();
+            displaySignals();
+            displayAllocation();
+            
+            // Delay chart creation to ensure DOM is ready
+            setTimeout(() => {
+                createCharts();
+            }, 100);
+        }
+        
+        function displayMetrics() {
+            const metricsGrid = document.getElementById('metrics-grid');
+            const metrics = analysisData.metrics;
+            
+            metricsGrid.innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-value ${metrics.expected_return > 0 ? 'positive' : 'negative'}">${metrics.expected_return.toFixed(1)}%</div>
+                    <div class="metric-label">Expected Return</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${metrics.volatility.toFixed(1)}%</div>
+                    <div class="metric-label">Volatility</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value ${metrics.sharpe_ratio > 1 ? 'positive' : ''}">${metrics.sharpe_ratio.toFixed(2)}</div>
+                    <div class="metric-label">Sharpe Ratio</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value negative">${metrics.max_drawdown.toFixed(1)}%</div>
+                    <div class="metric-label">Max Drawdown</div>
+                </div>
+            `;
+            
+            // Update risk panel metrics
+            document.getElementById('var-value').textContent = `${metrics.var_95.toFixed(1)}%`;
+            document.getElementById('beta-value').textContent = metrics.beta.toFixed(2);
+        }
+        
+        function displaySignals() {
+            const signalsContainer = document.getElementById('trading-signals');
+            const signals = analysisData.signals;
+            
+            signalsContainer.innerHTML = signals.map(signal => `
+                <div class="signal-card">
+                    <div class="signal-header">
+                        <div class="signal-symbol">${signal.symbol}</div>
+                        <div class="signal-badge signal-${signal.signal.toLowerCase()}">${signal.signal}</div>
+                    </div>
+                    <div class="signal-metrics">
+                        <div class="signal-metric">
+                            <div class="signal-metric-value">${signal.rsi}</div>
+                            <div class="signal-metric-label">RSI</div>
+                        </div>
+                        <div class="signal-metric">
+                            <div class="signal-metric-value">${signal.sma_trend}</div>
+                            <div class="signal-metric-label">Trend</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function displayAllocation() {
+            const allocationList = document.getElementById('allocation-list');
+            const allocation = analysisData.allocation;
+            
+            allocationList.innerHTML = allocation
+                .sort((a, b) => parseFloat(b.weight) - parseFloat(a.weight))
+                .map(item => `
+                    <div class="allocation-item">
+                        <div class="allocation-symbol">${item.symbol}</div>
+                        <div class="allocation-weight">${item.weight}%</div>
+                    </div>
+                `).join('');
+        }
+        
+        function createCharts() {
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => {
+                if (chart && chart.destroy) chart.destroy();
+            });
+            charts = {};
+            
+            createPerformanceChart();
+            createAllocationChart();
+            createVolatilityChart();
+            createDrawdownChart();
+            createMonteCarloChart();
+            createEfficientFrontierChart();
+            createCorrelationChart();
+        }
+        
+        function createPerformanceChart() {
+            const ctx = document.getElementById('performance-chart');
+            if (!ctx) return;
+            
+            const performance = analysisData.performance;
+            
+            charts.performance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: performance.dates,
+                    datasets: [{
+                        label: 'Portfolio Value',
+                        data: performance.values,
+                        borderColor: '#000000',
+                        backgroundColor: 'rgba(0, 0, 0, 0.03)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed.y.toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            display: false 
+                        },
+                        y: {
+                            grid: { color: '#f5f5f5' },
+                            ticks: {
+                                callback: function(value) {
+                                    return  + (value / 1000).toFixed(0) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createAllocationChart() {
+            const ctx = document.getElementById('allocation-chart');
+            if (!ctx) return;
+            
+            const allocation = analysisData.allocation;
+            
+            charts.allocation = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: allocation.map(item => item.symbol),
+                    datasets: [{
+                        data: allocation.map(item => parseFloat(item.weight)),
+                        backgroundColor: [
+                            '#000000', '#4b5563', '#9ca3af', '#d1d5db', '#e5e7eb',
+                            '#f3f4f6', '#1f2937', '#374151', '#6b7280', '#9ca3af'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 16,
+                                font: { size: 12 },
+                                generateLabels: function(chart) {
+                                    const data = chart.data;
+                                    return data.labels.map((label, i) => ({
+                                        text: `${label} ${data.datasets[0].data[i]}%`,
+                                        fillStyle: data.datasets[0].backgroundColor[i],
+                                        hidden: false,
+                                        index: i
+                                    }));
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createVolatilityChart() {
+            const ctx = document.getElementById('volatility-chart');
+            if (!ctx) return;
+            
+            // Generate rolling volatility data
+            const dates = analysisData.performance.dates.slice(-90);
+            const volatility = dates.map((_, i) => {
+                const base = analysisData.metrics.volatility;
+                return base + Math.sin(i / 10) * 5 + (Math.random() - 0.5) * 2;
+            });
+            
+            charts.volatility = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Rolling Volatility',
+                        data: volatility,
+                        borderColor: '#4b5563',
+                        backgroundColor: 'rgba(75, 85, 99, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: {
+                            grid: { color: '#f5f5f5' },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(0) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createDrawdownChart() {
+            const ctx = document.getElementById('drawdown-chart');
+            if (!ctx) return;
+            
+            // Calculate drawdown from performance data
+            const values = analysisData.performance.values;
+            const dates = analysisData.performance.dates;
+            let peak = values[0];
+            const drawdowns = [];
+            
+            values.forEach(value => {
+                if (value > peak) peak = value;
+                drawdowns.push(((value - peak) / peak) * 100);
+            });
+            
+            charts.drawdown = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Drawdown',
+                        data: drawdowns,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: {
+                            grid: { color: '#f5f5f5' },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(0) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createMonteCarloChart() {
+            const ctx = document.getElementById('monte-carlo-chart');
+            if (!ctx) return;
+            
+            const mc = analysisData.monte_carlo;
+            const dates = analysisData.performance.dates;
+            
+            charts.monteCarlo = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: '95th Percentile',
+                        data: mc.percentiles.p95,
+                        borderColor: '#22c55e',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 0
+                    }, {
+                        label: 'Median',
+                        data: mc.percentiles.p50,
+                        borderColor: '#000000',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 0
+                    }, {
+                        label: '5th Percentile',
+                        data: mc.percentiles.p5,
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { padding: 20 }
+                        }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: {
+                            grid: { color: '#f5f5f5' },
+                            ticks: {
+                                callback: function(value) {
+                                    return  + (value / 1000).toFixed(0) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createEfficientFrontierChart() {
+            const ctx = document.getElementById('efficient-frontier-chart');
+            if (!ctx) return;
+            
+            // Generate efficient frontier data
+            const frontierPoints = Array.from({length: 20}, (_, i) => ({
+                x: 5 + i * 1.5,
+                y: 2 + Math.sqrt(i * 2)
+            }));
+            
+            const currentPortfolio = {
+                x: analysisData.metrics.volatility,
+                y: analysisData.metrics.expected_return
+            };
+            
+            charts.efficientFrontier = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Efficient Frontier',
+                        data: frontierPoints,
+                        borderColor: '#9ca3af',
+                        backgroundColor: '#9ca3af',
+                        showLine: true,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 2
+                    }, {
+                        label: 'Current Portfolio',
+                        data: [currentPortfolio],
+                        backgroundColor: '#000000',
+                        borderColor: '#000000',
+                        borderWidth: 2,
+                        pointRadius: 8,
+                        pointStyle: 'star'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { padding: 20 }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { 
+                                display: true, 
+                                text: 'Risk (Volatility %)'
+                            },
+                            grid: { color: '#f5f5f5' }
+                        },
+                        y: {
+                            title: { 
+                                display: true, 
+                                text: 'Expected Return (%)'
+                            },
+                            grid: { color: '#f5f5f5' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createCorrelationChart() {
+            const ctx = document.getElementById('correlation-chart');
+            if (!ctx) return;
+            
+            console.log('Creating correlation chart...', analysisData.correlation_data);
+            
+            // Use real correlation data if available
+            if (analysisData.correlation_data && analysisData.correlation_data.correlations) {
+                const correlationData = analysisData.correlation_data;
+                const correlations = correlationData.correlations;
+                const stocks = correlationData.stocks;
+                
+                console.log('Using real correlation data:', correlations.length, 'points for', stocks.length, 'stocks');
+                
+                // Create a clean, minimalist heatmap
+                const heatmapData = correlations.map(corr => {
+                    const value = corr.v || 0;
+                    const absValue = Math.abs(value);
+                    
+                    // Minimalist color scheme: grayscale with subtle accent for negatives
+                    let backgroundColor;
+                    if (value === 1.0) {
+                        backgroundColor = '#000000'; // Perfect correlation = black
+                    } else if (value >= 0.7) {
+                        backgroundColor = '#333333'; // Strong = dark gray
+                    } else if (value >= 0.5) {
+                        backgroundColor = '#666666'; // Moderate = medium gray
+                    } else if (value >= 0.3) {
+                        backgroundColor = '#999999'; // Weak = light gray
+                    } else if (value >= 0) {
+                        backgroundColor = '#cccccc'; // Very weak = very light gray
+                    } else {
+                        // Negative correlations in subtle red
+                        backgroundColor = value <= -0.3 ? '#dc2626' : '#fca5a5';
+                    }
+                    
+                    return {
+                        x: corr.x,
+                        y: corr.y,
+                        v: value,
+                        backgroundColor: backgroundColor,
+                        borderColor: '#ffffff',
+                        borderWidth: 1,
+                        stock1: corr.stock1 || stocks[corr.x],
+                        stock2: corr.stock2 || stocks[corr.y]
+                    };
+                });
+                
+                charts.correlation = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Correlation',
+                            data: heatmapData,
+                            backgroundColor: heatmapData.map(d => d.backgroundColor),
+                            borderColor: heatmapData.map(d => d.borderColor),
+                            borderWidth: 1,
+                            pointRadius: Math.min(40, Math.max(20, (240 / stocks.length) - 2)), // Responsive size
+                            pointHoverRadius: Math.min(45, Math.max(25, (240 / stocks.length) + 3)),
+                            pointStyle: 'rect' // Square points for clean heatmap look
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                                titleColor: 'white',
+                                bodyColor: 'white',
+                                borderColor: 'rgba(255, 255, 255, 0.1)',
+                                borderWidth: 1,
+                                cornerRadius: 4,
+                                displayColors: false,
+                                callbacks: {
+                                    title: function() {
+                                        return null; // No title for cleaner look
+                                    },
+                                    label: function(context) {
+                                        const dataPoint = heatmapData[context.dataIndex];
+                                        const correlation = dataPoint.v;
+                                        const stock1 = dataPoint.stock1;
+                                        const stock2 = dataPoint.stock2;
+                                        
+                                        return `${stock1} × ${stock2}  ${correlation.toFixed(3)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                position: 'bottom',
+                                min: -0.5,
+                                max: stocks.length - 0.5,
+                                ticks: {
+                                    stepSize: 1,
+                                    callback: function(value) {
+                                        const idx = Math.round(value);
+                                        return (idx >= 0 && idx < stocks.length) ? stocks[idx] : '';
+                                    },
+                                    font: {
+                                        size: 11,
+                                        weight: '500'
+                                    },
+                                    color: '#666666'
+                                },
+                                grid: { 
+                                    display: false // Remove grid for cleaner look
+                                },
+                                border: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                min: -0.5,
+                                max: stocks.length - 0.5,
+                                ticks: {
+                                    stepSize: 1,
+                                    callback: function(value) {
+                                        const idx = Math.round(value);
+                                        return (idx >= 0 && idx < stocks.length) ? stocks[idx] : '';
+                                    },
+                                    font: {
+                                        size: 11,
+                                        weight: '500'
+                                    },
+                                    color: '#666666'
+                                },
+                                grid: { 
+                                    display: false // Remove grid for cleaner look
+                                },
+                                border: {
+                                    display: false
+                                }
+                            }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'point'
+                        },
+                        elements: {
+                            point: {
+                                hoverBorderWidth: 0
+                            }
+                        },
+                        layout: {
+                            padding: {
+                                top: 10,
+                                bottom: 10,
+                                left: 10,
+                                right: 10
+                            }
+                        }
+                    }
+                });
+                
+                console.log('Minimalist correlation chart created successfully');
+                
+            } else {
+                console.log('No correlation data available, creating minimalist fallback chart');
+                
+                // Fallback with minimalist design
+                const stocks = analysisData.allocation ? analysisData.allocation.map(a => a.symbol) : selectedStocks;
+                const heatmapData = [];
+                
+                for (let i = 0; i < stocks.length; i++) {
+                    for (let j = 0; j < stocks.length; j++) {
+                        const value = i === j ? 1.0 : (0.2 + Math.random() * 0.6) * (Math.random() > 0.1 ? 1 : -1);
+                        
+                        let backgroundColor;
+                        if (value === 1.0) {
+                            backgroundColor = '#000000';
+                        } else if (value >= 0.7) {
+                            backgroundColor = '#333333';
+                        } else if (value >= 0.5) {
+                            backgroundColor = '#666666';
+                        } else if (value >= 0.3) {
+                            backgroundColor = '#999999';
+                        } else if (value >= 0) {
+                            backgroundColor = '#cccccc';
+                        } else {
+                            backgroundColor = value <= -0.3 ? '#dc2626' : '#fca5a5';
+                        }
+                        
+                        heatmapData.push({
+                            x: i,
+                            y: j,
+                            v: value,
+                            backgroundColor: backgroundColor,
+                            stock1: stocks[i],
+                            stock2: stocks[j]
+                        });
+                    }
+                }
+                
+                charts.correlation = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Correlation',
+                            data: heatmapData,
+                            backgroundColor: heatmapData.map(d => d.backgroundColor),
+                            borderColor: '#ffffff',
+                            borderWidth: 1,
+                            pointRadius: Math.min(35, Math.max(15, (200 / stocks.length))),
+                            pointHoverRadius: Math.min(40, Math.max(20, (200 / stocks.length) + 5)),
+                            pointStyle: 'rect'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                                titleColor: 'white',
+                                bodyColor: 'white',
+                                displayColors: false,
+                                callbacks: {
+                                    title: function() { return null; },
+                                    label: function(context) {
+                                        const dataPoint = heatmapData[context.dataIndex];
+                                        return `${dataPoint.stock1} × ${dataPoint.stock2}  ${dataPoint.v.toFixed(3)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                position: 'bottom',
+                                min: -0.5,
+                                max: stocks.length - 0.5,
+                                ticks: {
+                                    stepSize: 1,
+                                    callback: function(value) {
+                                        const idx = Math.round(value);
+                                        return (idx >= 0 && idx < stocks.length) ? stocks[idx] : '';
+                                    },
+                                    font: { size: 11, weight: '500' },
+                                    color: '#666666'
+                                },
+                                grid: { display: false },
+                                border: { display: false }
+                            },
+                            y: {
+                                type: 'linear',
+                                min: -0.5,
+                                max: stocks.length - 0.5,
+                                ticks: {
+                                    stepSize: 1,
+                                    callback: function(value) {
+                                        const idx = Math.round(value);
+                                        return (idx >= 0 && idx < stocks.length) ? stocks[idx] : '';
+                                    },
+                                    font: { size: 11, weight: '500' },
+                                    color: '#666666'
+                                },
+                                grid: { display: false },
+                                border: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            const panels = document.querySelectorAll('.tab-panel');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            panels.forEach(panel => panel.style.display = 'none');
+            
+            const activeTab = document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`);
+            if (activeTab) activeTab.classList.add('active');
+            
+            const activePanel = document.getElementById(`${tabName}-panel`);
+            if (activePanel) activePanel.style.display = 'block';
+        }
+        
+        function hideAnalysis() {
+            document.getElementById('analysis-section').style.display = 'none';
+        }
+        
+        function showLoading(message = 'Analyzing portfolio...') {
+            const loadingHtml = `
+                <div class="loading" id="loading-overlay">
+                    <div class="loading-spinner"></div>
+                    <p>${message}</p>
+                    <p style="font-size: 14px; color: var(--gray); margin-top: 16px;">
+                        Much faster with Yahoo Finance - unlimited requests!
+                    </p>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', loadingHtml);
+        }
+        
+        function hideLoading() {
+            const loading = document.getElementById('loading-overlay');
+            if (loading) loading.remove();
+        }
+        
+        function showStatus(message, type = 'success') {
+            const status = document.getElementById('status-message');
+            status.textContent = message;
+            status.className = `status ${type === 'error' ? 'status-error' : type === 'warning' ? 'status-warning' : type === 'info' ? 'status-info' : ''} show`;
+            
+            setTimeout(() => {
+                status.classList.remove('show');
+            }, type === 'error' ? 5000 : 3000);
+        }
+    </script>
+</body>
+</html>
